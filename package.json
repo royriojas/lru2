@@ -1,6 +1,6 @@
 {
   "name": "lru2",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Yet another LRU module with a very simple API. Just get/set and no more.",
   "main": "index.js",
   "scripts": {
