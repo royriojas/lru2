@@ -14,8 +14,22 @@ npm i -D lru2
 
 ## Usage
 
-```
-var
+```javascript
+// create the cache
+var lru2 = require('lru2').create({ limit: 3 }); //0 for no limit
+
+// set an entry
+lru2.set('key', { some: value});
+
+// get the value
+lru2.get('key') // some value if present
+
+// get not existent key
+lru2.get('someMissingKey') // will return null
+
+// get the current state of the cache
+lru2.toArray(); // [ { key: 'key',  value: { some : 'value' }}]
+
 ```
 
 ## Changelog
