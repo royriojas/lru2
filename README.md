@@ -16,7 +16,7 @@ npm i -D lru2
 
 ```javascript
 // create the cache
-var lru2 = require('lru2').create({ limit: 3 }); //0 for no limit
+var lru2 = require('lru2').create({ limit: 3 }); // limit=0 for no limit
 
 // set an entry
 lru2.set('key', { some: value});
@@ -30,6 +30,21 @@ lru2.get('someMissingKey') // will return null
 // get the current state of the cache
 lru2.toArray(); // [ { key: 'key',  value: { some : 'value' }}]
 
+// peek some value (without marking it as recently used)
+var entry = lru2.peek('key'); // undefined if key does not exists
+
+// removes the entry regardless if it is recently used or not
+lru2.remove('key');
+
+//
+var lru2 = require('lru2').create({
+  limit: 3, // limit=0 for no limit
+  onRemoveEntry: function (entry) {
+    // perform the clean up
+    // of heavy resources here:
+    entry.destroy(); // clear db connections or other heavy resources used
+  }
+});
 ```
 
 ## Changelog

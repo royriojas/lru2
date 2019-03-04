@@ -2,6 +2,8 @@ var createList = function ( options ) {
   options = options || { };
 
   var limit = options.limit || 0;
+  var onRemoveEntry = options.onRemoveEntry;
+
   if ( limit <= 0 ) {
     limit = Infinity;
   }
@@ -33,16 +35,22 @@ var createList = function ( options ) {
     prune: function () {
       var me = this;
       if ( length > limit ) {
-        me.remove( tail );
+        me.remove( tail, true /* fireEntryRemove */ );
       }
     },
-    remove: function ( node ) {
+    remove: function ( node, fireEntryRemove ) {
       var entry = cache[ node.key ];
       /* istanbul ignore if */
       if ( !entry ) {
         return;
       }
+
       delete cache[ node.key ];
+
+      if ( fireEntryRemove && onRemoveEntry ) {
+        onRemoveEntry( entry.value );
+      }
+
       var next = entry.next;
       var prev = entry.prev;
 
@@ -68,26 +76,50 @@ var createList = function ( options ) {
         me.add( entry );
       }
       return entry;
+    },
+    peek: function ( key ) {
+      var entry = cache[ key ];
+      return entry;
     }
   };
+
   var ins = {
     get: function ( key ) {
       var val = lru.find( key );
       if ( val ) {
         return val.value;
       }
-      return null;
+      return undefined;
     },
     set: function ( key, value ) {
-      var entry = { key: key, value: value };
+      var entry = {
+        key: key,
+        value: value
+      };
       lru.add( entry );
+    },
+    peek: function ( key ) {
+      var val = lru.peek( key );
+
+      if ( val ) {
+        return val.value;
+      }
+
+      return undefined;
+    },
+    remove: function ( key ) {
+      var node = lru.peek( key );
+      lru.remove( node, true /* fireEntryRemove */ );
     },
     toArray: function () {
       var runner = head;
-      var items = [ ];
+      var items = [];
 
       while (runner) {
-        items.push( { key: runner.key, value: runner.value } );
+        items.push( {
+          key: runner.key,
+          value: runner.value
+        } );
         runner = runner.next;
       }
 
@@ -104,4 +136,6 @@ var createList = function ( options ) {
   return ins;
 };
 
-module.exports = { create: createList };
+module.exports = {
+  create: createList
+};
