@@ -28,17 +28,11 @@
     "npm run check"
   ],
   "devDependencies": {
-    "bumpery": "^1.0.7",
-    "changelogx": "^1.0.13",
-    "esbeautifier": "10.1.1",
-    "eslinter": "^2.0.1",
-    "istanbul": "^0.3.17",
-    "mocha-runner": "2.0.0",
+    "changelogx": "^1.0.19",
     "prepush": "^2.0.4",
-    "proxyquire": "^1.6.0",
-    "watch-spawn": "^1.0.3"
+    "@redisrupt/eslint-red": "^7.0.0",
+    "babel-deps": "file:local_modules/babel-deps"
   },
-  "dependencies": {},
   "changelogx": {
     "ignoreRegExp": [
       "BLD: Release",
