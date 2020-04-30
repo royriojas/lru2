@@ -2,7 +2,13 @@
   "name": "lru2",
   "version": "0.1.3",
   "description": "Yet another LRU module with a very simple API. Just get/set and no more.",
-  "main": "index.js",
+  "main": "dist/lru2.cjs.js",
+  "_browser": "dist/lru2.umd.js",
+  "browser": {
+    "./dist/index.js": "./dist/lru2.umd.js",
+    "./dist/index.esm.js": "./dist/lru2.esm.js"
+  },
+  "module": "dist/lru2.esm.js",
   "scripts": {
     "check": "eslint --cache --cache-location node_modules/.cache/ -f friendly 'src/**/*.js' 'tests/**/*.js'",
     "autofix": "npm run check -- --fix",
