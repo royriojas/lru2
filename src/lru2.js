@@ -1,10 +1,54 @@
+const createHeadOrTailManager = cache => {
+  const weakMap = new WeakMap();
+  return {
+    get() {
+      return weakMap.get(cache);
+    },
+    set(head) {
+      return weakMap.set(cache, head);
+    },
+    delete() {
+      return weakMap.delete(cache);
+    },
+  };
+};
+
+const createNextOrPrevManager = () => {
+  const nextWeakMap = new WeakMap();
+  const prevWeakMap = new WeakMap();
+
+  return {
+    getNext(node) {
+      return nextWeakMap.get(node);
+    },
+    setNext(node, next) {
+      return nextWeakMap.set(node, next);
+    },
+    getPrev(node) {
+      return prevWeakMap.get(node);
+    },
+    setPrev(node, prev) {
+      return prevWeakMap.set(node, prev);
+    },
+    deleteNext(node) {
+      nextWeakMap.delete(node);
+    },
+    deletePrev(node) {
+      prevWeakMap.delete(node);
+    },
+  };
+};
+
 export const create = ({ limit = 0, onRemoveEntry } = {}) => {
   if (limit <= 0) {
     limit = Infinity;
   }
   const cache = new Map();
-  let head;
-  let tail;
+
+  const headManager = createHeadOrTailManager(cache);
+  const tailManager = createHeadOrTailManager(cache);
+
+  const nextPrevManager = createNextOrPrevManager();
 
   const lru = {
     add(node) {
@@ -14,21 +58,24 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
         me.remove(entry);
       }
       if (cache.size === 0) {
-        head = tail = node;
-        node.next = node.prev = null;
+        headManager.set(node);
+        tailManager.set(node);
+        nextPrevManager.deleteNext();
+        nextPrevManager.deletePrev();
       } else {
-        head.prev = node;
-        node.next = head;
-        node.prev = null;
-        head = node;
+        const head = tailManager.get();
+        nextPrevManager.setPrev(node);
+        nextPrevManager.setNext(head);
+        nextPrevManager.deletePrev(node);
+        tailManager.set(node);
       }
       cache.set(node.key, node);
       me.prune();
     },
     prune() {
       const me = this;
-      if (cache.size > limit) {
-        me.remove(tail, { fireEntryRemove: true });
+      while (cache.size > limit) {
+        me.remove(tailManager.get(), { fireEntryRemove: true });
       }
     },
     remove(node, { fireEntryRemove } = {}) {
@@ -40,26 +87,29 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
 
       cache.delete(node.key);
 
-      const next = entry.next;
-      const prev = entry.prev;
+      const next = nextPrevManager.getNext(entry);
+      const prev = nextPrevManager.getPrev(entry);
 
-      entry.next = entry.prev = null;
+      nextPrevManager.deleteNext(entry);
+      nextPrevManager.deletePrev(entry);
 
       if (fireEntryRemove && onRemoveEntry) {
         onRemoveEntry(entry.value, entry);
       }
 
       if (prev) {
-        prev.next = next;
+        nextPrevManager.setNext(next);
       }
       if (next) {
-        next.prev = prev;
+        nextPrevManager.setPrev(prev);
       }
+      const tail = tailManager.get();
       if (entry === tail) {
-        tail = prev;
+        tailManager.set(prev);
       }
+      const head = headManager.get();
       if (entry === head) {
-        head = next;
+        headManager.set(next);
       }
     },
     find(key) {
@@ -107,7 +157,7 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
       lru.remove(node, true /* fireEntryRemove */);
     },
     toArray() {
-      let runner = head;
+      let runner = headManager.get();
       const items = [];
 
       while (runner) {
@@ -115,7 +165,7 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
           key: runner.key,
           value: runner.value,
         });
-        runner = runner.next;
+        runner = nextPrevManager.getNext(runner);
       }
 
       return items;
