@@ -4,19 +4,20 @@
   "description": "Yet another LRU module with a very simple API. Just get/set and no more.",
   "main": "index.js",
   "scripts": {
-    "beautify": "esbeautifier './index.js' './specs/**/*.js'",
-    "beautify-check": "esbeautifier -k './index.js' './specs/**/*.js'",
-    "eslint": "eslinter './index.js' './specs/**/*.js'",
-    "lint": "npm run beautify && npm run eslint",
-    "test": "mocha-runner './specs/**/*.js'",
-    "cover": "istanbul cover -x specs/**/*.js mocha-runner './specs/**/*.js' html text-summary -- --useCache=true",
-    "watch": "watch-spawn -i -p specs/**/*.js -p index.js npm run cover",
-    "check": "npm run beautify-check && npm run eslint",
-    "prepush": "npm run check && npm run test",
+    "check": "eslint --cache --cache-location node_modules/.cache/ -f friendly 'src/**/*.js' 'tests/**/*.js'",
+    "autofix": "npm run check -- --fix",
     "changelog": "changelogx -f markdown -o ./changelog.md",
-    "do-changelog": "npm run changelog && git add ./changelog.md && git commit -m 'DOC: Generate changelog'",
-    "install-hooks": "prepush install && changelogx install-hook",
-    "bump": "bumpery --verify='npm run check'"
+    "do-changelog": "npm run changelog && git add ./changelog.md && git commit -m 'DOC: Generate changelog' --no-verify",
+    "install-hooks": "changelogx install-hook",
+    "pre-v": "npm run check",
+    "post-v": "npm run do-changelog && git push --no-verify && git push --tags --no-verify",
+    "bump-major": "npm run pre-v && npm version major -m 'BLD: Release v%s' && npm run post-v",
+    "bump-minor": "npm run pre-v && npm version minor -m 'BLD: Release v%s' && npm run post-v",
+    "bump-patch": "npm run pre-v && npm version patch -m 'BLD: Release v%s' && npm run post-v",
+    "prepublishOnly": "npm run build",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "jest --config jest.config.js"
   },
   "repository": {
     "type": "git",
@@ -28,10 +29,12 @@
     "npm run check"
   ],
   "devDependencies": {
-    "changelogx": "^1.0.19",
-    "prepush": "^2.0.4",
     "@redisrupt/eslint-red": "^7.0.0",
-    "babel-deps": "file:local_modules/babel-deps"
+    "babel-deps": "file:local_modules/babel-deps",
+    "changelogx": "^5.0.6",
+    "jest": "^25.5.2",
+    "prepush": "^3.1.11",
+    "rollup-deps": "file:local_modules/rollup-deps"
   },
   "changelogx": {
     "ignoreRegExp": [
