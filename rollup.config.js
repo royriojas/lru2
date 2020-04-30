@@ -4,23 +4,10 @@ import babel from '@rollup/plugin-babel';
 import replace from '@rollup/plugin-replace';
 import pkg from './package.json';
 
+const babelCfg = require('./babel.config');
+
 const getBabelPlugins = ({ includeRuntime }) => {
-  const plugins = [
-    [
-      '@babel/plugin-proposal-decorators',
-      {
-        legacy: true,
-      },
-    ],
-    [
-      '@babel/plugin-proposal-class-properties',
-      {
-        loose: true,
-      },
-    ],
-    '@babel/plugin-proposal-object-rest-spread',
-    '@babel/plugin-proposal-optional-chaining',
-  ];
+  const plugins = [...babelCfg.plugins];
 
   if (includeRuntime) {
     plugins.push('@babel/plugin-transform-runtime');
@@ -34,9 +21,6 @@ const commonBabelConfig = {
 };
 
 const commonExternals = [
-  'mobx',
-  'debouncy',
-  'jq-trim',
   '@babel/runtime/helpers/initializerDefineProperty',
   '@babel/runtime/helpers/toConsumableArray',
   '@babel/runtime/helpers/defineProperty',
@@ -51,13 +35,11 @@ const commonExternals = [
 
 export default [
   {
-    input: 'src/FormModel.js',
-    external: ['mobx'],
+    input: 'src/lru2.js',
     output: {
       file: pkg._browser,
-      name: 'MobxForm',
+      name: 'lru2',
       format: 'umd',
-      globals: { mobx: 'mobx' },
     },
     plugins: [
       resolve(),
@@ -84,9 +66,12 @@ export default [
     ],
   },
   {
-    input: 'src/FormModel.js',
+    input: 'src/lru2.js',
     external: commonExternals,
-    output: [{ file: pkg.main, format: 'cjs' }, { file: pkg.module, format: 'es' }],
+    output: [
+      { file: pkg.main, format: 'cjs' },
+      { file: pkg.module, format: 'es' },
+    ],
     plugins: [
       babel({
         babelrc: false,
@@ -108,32 +93,6 @@ export default [
                   'last 2 Edge versions',
                   'not Edge < 15',
                 ],
-              },
-              modules: false,
-            },
-          ],
-        ],
-        ...commonBabelConfig,
-        plugins: getBabelPlugins({ includeRuntime: true }),
-      }),
-      commonjs(),
-    ],
-  },
-
-  {
-    input: 'src/FormModel.js',
-    external: commonExternals,
-    output: [{ file: pkg._legacy_module, format: 'cjs' }],
-    plugins: [
-      babel({
-        babelrc: false,
-        babelHelpers: 'runtime',
-        presets: [
-          [
-            '@babel/preset-env',
-            {
-              targets: {
-                browsers: ['last 2 versions'],
               },
               modules: false,
             },

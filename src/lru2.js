@@ -1,25 +1,19 @@
-const createList = options => {
-  options = options || {};
-
-  let limit = options.limit || 0;
-  const onRemoveEntry = options.onRemoveEntry;
-
+export const create = ({ limit = 0, onRemoveEntry } = {}) => {
   if (limit <= 0) {
     limit = Infinity;
   }
-  const cache = {};
+  const cache = new Map();
   let head;
   let tail;
-  let length = 0;
 
   const lru = {
     add(node) {
       const me = this;
-      const entry = cache[node.key];
+      const entry = cache.get(node.key);
       if (entry) {
         me.remove(entry);
       }
-      if (length === 0) {
+      if (cache.size === 0) {
         head = tail = node;
         node.next = node.prev = null;
       } else {
@@ -28,31 +22,32 @@ const createList = options => {
         node.prev = null;
         head = node;
       }
-      cache[node.key] = node;
-      length++;
+      cache.set(node.key, node);
       me.prune();
     },
     prune() {
       const me = this;
-      if (length > limit) {
-        me.remove(tail, true /* fireEntryRemove */);
+      if (cache.size > limit) {
+        me.remove(tail, { fireEntryRemove: true });
       }
     },
-    remove(node, fireEntryRemove) {
-      const entry = cache[node.key];
-      /* istanbul ignore if */
+    remove(node, { fireEntryRemove } = {}) {
+      const entry = cache.get(node.key);
+
       if (!entry) {
         return;
       }
 
-      delete cache[node.key];
-
-      if (fireEntryRemove && onRemoveEntry) {
-        onRemoveEntry(entry.value);
-      }
+      cache.delete(node.key);
 
       const next = entry.next;
       const prev = entry.prev;
+
+      entry.next = entry.prev = null;
+
+      if (fireEntryRemove && onRemoveEntry) {
+        onRemoveEntry(entry.value, entry);
+      }
 
       if (prev) {
         prev.next = next;
@@ -66,11 +61,10 @@ const createList = options => {
       if (entry === head) {
         head = next;
       }
-      length--;
     },
     find(key) {
       const me = this;
-      const entry = cache[key];
+      const entry = cache.get(key);
       if (entry) {
         me.remove(entry);
         me.add(entry);
@@ -78,7 +72,7 @@ const createList = options => {
       return entry;
     },
     peek(key) {
-      const entry = cache[key];
+      const entry = cache.get(key);
       return entry;
     },
   };
@@ -109,6 +103,7 @@ const createList = options => {
     },
     remove(key) {
       const node = lru.peek(key);
+      if (!node) return;
       lru.remove(node, true /* fireEntryRemove */);
     },
     toArray() {
@@ -129,13 +124,9 @@ const createList = options => {
 
   Object.defineProperty(ins, 'length', {
     get() {
-      return length;
+      return cache.size;
     },
   });
 
   return ins;
-};
-
-module.exports = {
-  create: createList,
 };

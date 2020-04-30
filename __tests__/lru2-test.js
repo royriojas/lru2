@@ -1,14 +1,16 @@
+import { create } from './helpers/create-lru';
+
 /* eslint-disable global-require */
 describe('lru2', () => {
   describe('set', () => {
     it('should be empty when it is created', () => {
-      const lru2 = require('../src/lru2').create();
+      const lru2 = create();
       expect(lru2.length).toEqual(0);
       expect(lru2.toArray()).toEqual([]);
     });
 
     it('should set the values on the lru2 and prune the ones that are the last recently used first', () => {
-      const lru2 = require('../src/lru2').create({
+      const lru2 = create({
         limit: 3,
       });
       lru2.set('1', 1);
@@ -21,7 +23,7 @@ describe('lru2', () => {
   });
 
   it('should update the order of the structure when the items are visited', () => {
-    const lru2 = require('../src/lru2').create({
+    const lru2 = create({
       limit: 3,
     });
     lru2.set('1', 1);
@@ -34,7 +36,7 @@ describe('lru2', () => {
   });
 
   it('should update the order of the structure when an item with the same key is added', () => {
-    const lru2 = require('../src/lru2').create({
+    const lru2 = create({
       limit: 3,
     });
     lru2.set('1', 1);
@@ -50,7 +52,7 @@ describe('lru2', () => {
 
   describe('get', () => {
     it('should return undefined if a value is not in the cache', () => {
-      const lru2 = require('../src/lru2').create({
+      const lru2 = create({
         limit: 3,
       });
       const val = lru2.get('1');
@@ -59,7 +61,7 @@ describe('lru2', () => {
     });
 
     it('should return the value if the entry is found', () => {
-      const lru2 = require('../src/lru2').create({
+      const lru2 = create({
         limit: 3,
       });
       lru2.set('1', 1);
@@ -76,9 +78,10 @@ describe('lru2', () => {
 
   describe('when the instance in the cache contains a complex object', () => {
     it('should provide a callback when an element is removed to provide a chance to perform some cleanup', () => {
-      const lru2 = require('../src/lru2').create({
+      const lru2 = create({
         limit: 3,
-        onRemoveEntry(entry) {
+        onRemoveEntry(entry, node) {
+          console.log(node);
           entry.destroy();
         },
       });
@@ -112,7 +115,7 @@ describe('lru2', () => {
 
   describe('when the remove method is used', () => {
     it('should remove an entry from the lru regardless if it is recently used or not', () => {
-      const lru2 = require('../src/lru2').create({
+      const lru2 = create({
         limit: 3,
         onRemoveEntry(entry) {
           entry.destroy();
