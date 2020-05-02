@@ -10,7 +10,8 @@
   },
   "module": "dist/lru2.esm.js",
   "scripts": {
-    "check": "eslint --cache --cache-location node_modules/.cache/ -f friendly 'src/**/*.js' 'tests/**/*.js'",
+    "test:mem": "babel-node --expose-gc memory/memory-leak-example.js",
+    "check": "eslint --cache --cache-location node_modules/.cache/ -f friendly 'src/**/*.js' '__tests__/**/*.js'",
     "autofix": "npm run check -- --fix",
     "changelog": "changelogx -f markdown -o ./changelog.md",
     "do-changelog": "npm run changelog && git add ./changelog.md && git commit -m 'DOC: Generate changelog' --no-verify",

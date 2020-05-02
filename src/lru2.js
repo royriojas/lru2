@@ -40,7 +40,7 @@ const createList = options => {
     },
     remove(node, fireEntryRemove) {
       const entry = cache[node.key];
-      /* istanbul ignore if */
+
       if (!entry) {
         return;
       }
