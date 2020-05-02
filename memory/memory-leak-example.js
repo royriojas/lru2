@@ -1,6 +1,4 @@
-import { create } from '../src/lru2';
-
-let savedInstance;
+const create = process.env.USE_NEW_IMPL === 'true' ? require('../src/lru2').create : require('../src/lru2-old').create;
 
 const runMe = async () => {
   const MAX_INSTANCES = 300000;
@@ -19,10 +17,6 @@ const runMe = async () => {
   for (let i = 0; i < MAX_INSTANCES; i++) {
     const instance = createInstance(i);
     lru2.set(i, instance);
-
-    if (i === 100) {
-      savedInstance = instance;
-    }
   }
 
   for (let i = 0; i < MAX_INSTANCES; i++) {
@@ -54,15 +48,13 @@ const test = async () => {
     const lru2 = await runMe();
     logMemory(`Test ${formatAsNumber(id)}: after  execution`);
 
-    lru2.destroy();
+    lru2?.destroy?.();
     if (global.gc) {
       global.gc();
       logMemory(`Test ${formatAsNumber(id)}: after calling gc`);
     }
     console.log('');
   }
-
-  console.log('>> saved instance', !!savedInstance);
 };
 
 test().then(() => logMemory('At the end'.padEnd(25)));
