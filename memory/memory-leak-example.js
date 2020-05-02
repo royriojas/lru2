@@ -43,19 +43,18 @@ const logMemory = message => {
 const formatAsNumber = number => new Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 }).format(number);
 
 const test = async () => {
-  const NUM_TESTS = 2;
+  const NUM_TESTS = 15;
 
   if (global.gc) global.gc();
-
-  // let lru2;
 
   logMemory('At the start'.padEnd(25));
   for (let i = 0; i < NUM_TESTS; i++) {
     const id = i + 1;
     logMemory(`Test ${formatAsNumber(id)}: before execution`);
-    await runMe();
+    const lru2 = await runMe();
     logMemory(`Test ${formatAsNumber(id)}: after  execution`);
 
+    lru2.destroy();
     if (global.gc) {
       global.gc();
       logMemory(`Test ${formatAsNumber(id)}: after calling gc`);

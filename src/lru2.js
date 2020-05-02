@@ -43,7 +43,8 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
   if (limit <= 0) {
     limit = Infinity;
   }
-  const cache = new Map();
+
+  let cache = new Map();
 
   const headManager = createHeadOrTailManager(cache);
   const tailManager = createHeadOrTailManager(cache);
@@ -154,7 +155,7 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
     remove(key) {
       const node = lru.peek(key);
       if (!node) return;
-      lru.remove(node, true /* fireEntryRemove */);
+      lru.remove(node, { fireEntryRemove: true });
     },
     toArray() {
       let runner = headManager.get();
@@ -170,13 +171,18 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
 
       return items;
     },
-  };
 
-  Object.defineProperty(ins, 'length', {
-    get() {
+    destroy() {
+      for (const entry of cache.values()) {
+        lru.remove(entry, { fireEntryRemove: true });
+      }
+      cache = null;
+    },
+
+    get length() {
       return cache.size;
     },
-  });
+  };
 
   return ins;
 };
