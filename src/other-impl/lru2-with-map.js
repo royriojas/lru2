@@ -1,20 +1,20 @@
-export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
+function createList({ limit = 0, onRemoveEntry }) {
   if (limit <= 0) {
     limit = Infinity;
   }
-  let cache = {};
+
+  let cache = new Map();
   let head;
   let tail;
-  let length = 0;
 
   const lru = {
     add(node) {
       const me = this;
-      const entry = cache[node.key];
+      const entry = cache.get(node.key);
       if (entry) {
         me.remove(entry);
       }
-      if (length === 0) {
+      if (cache.size === 0) {
         head = tail = node;
         node.next = node.prev = null;
       } else {
@@ -23,22 +23,21 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
         node.prev = null;
         head = node;
       }
-      cache[node.key] = node;
-      length++;
+      cache.set(node.key, node);
       me.prune();
+    },
+    prune() {
+      const me = this;
+      while (cache.size > limit) {
+        me.remove(tail);
+      }
     },
     peek(key) {
       const entry = cache[key];
       return entry;
     },
-    prune() {
-      const me = this;
-      while (length > limit) {
-        me.remove(tail);
-      }
-    },
     remove(node, { fireOnEntryRemove } = {}) {
-      const entry = cache[node.key];
+      const entry = cache.get(node.key);
 
       if (!entry) {
         return;
@@ -48,7 +47,7 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
         onRemoveEntry(entry.value, entry);
       }
 
-      cache[node.key] = undefined;
+      cache.delete(node.key);
 
       const next = entry.next;
       const prev = entry.prev;
@@ -67,11 +66,10 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
       if (entry === head) {
         head = next;
       }
-      length--;
     },
     find(key) {
       const me = this;
-      const entry = cache[key];
+      const entry = cache.get(key);
       if (entry) {
         me.remove(entry);
         me.add(entry);
@@ -85,7 +83,7 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
       if (val) {
         return val.value;
       }
-      return undefined;
+      return null;
     },
     set(key, value) {
       const entry = { key, value };
@@ -102,6 +100,7 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
 
       return items;
     },
+
     peek(key) {
       const val = lru.peek(key);
 
@@ -128,16 +127,15 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
       head = null;
       tail = null;
 
-      length = 0;
-
-      cache = {};
+      cache = new Map();
     },
+
     get length() {
-      return length;
+      return cache?.size || 0;
     },
   };
 
   return ins;
-};
+}
 
-export const create = createLRU;
+module.exports = { create: createList };

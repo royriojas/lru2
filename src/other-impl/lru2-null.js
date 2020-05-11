@@ -48,7 +48,7 @@ export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
         onRemoveEntry(entry.value, entry);
       }
 
-      cache[node.key] = undefined;
+      cache[node.key] = null;
 
       const next = entry.next;
       const prev = entry.prev;

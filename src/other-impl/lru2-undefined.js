@@ -1,11 +1,8 @@
-function createList(options) {
-  options = options || {};
-
-  let limit = options.limit || 0;
+export const createLRU = ({ limit = 0, onRemoveEntry } = {}) => {
   if (limit <= 0) {
     limit = Infinity;
   }
-  const cache = {};
+  let cache = {};
   let head;
   let tail;
   let length = 0;
@@ -30,21 +27,33 @@ function createList(options) {
       length++;
       me.prune();
     },
+    peek(key) {
+      const entry = cache[key];
+      return entry;
+    },
     prune() {
       const me = this;
-      if (length > limit) {
+      while (length > limit) {
         me.remove(tail);
       }
     },
-    remove(node) {
+    remove(node, { fireOnEntryRemove } = {}) {
       const entry = cache[node.key];
-      /* istanbul ignore if */
+
       if (!entry) {
         return;
       }
-      delete cache[node.key];
+
+      if (fireOnEntryRemove && onRemoveEntry) {
+        onRemoveEntry(entry.value, entry);
+      }
+
+      cache[node.key] = undefined;
+
       const next = entry.next;
       const prev = entry.prev;
+
+      entry.next = entry.prev = null;
 
       if (prev) {
         prev.next = next;
@@ -76,7 +85,7 @@ function createList(options) {
       if (val) {
         return val.value;
       }
-      return null;
+      return undefined;
     },
     set(key, value) {
       const entry = { key, value };
@@ -93,15 +102,42 @@ function createList(options) {
 
       return items;
     },
-  };
+    peek(key) {
+      const val = lru.peek(key);
 
-  Object.defineProperty(ins, 'length', {
-    get() {
+      if (val) {
+        return val.value;
+      }
+
+      return undefined;
+    },
+    remove(key) {
+      const node = lru.peek(key);
+      if (!node) return;
+      lru.remove(node, { fireOnEntryRemove: true });
+    },
+
+    clear() {
+      let runner = head;
+
+      while (runner) {
+        lru.remove(runner, { fireOnEntryRemove: true });
+        runner = runner.next;
+      }
+
+      head = null;
+      tail = null;
+
+      length = 0;
+
+      cache = {};
+    },
+    get length() {
       return length;
     },
-  });
+  };
 
   return ins;
-}
+};
 
-module.exports = { create: createList };
+export const create = createLRU;

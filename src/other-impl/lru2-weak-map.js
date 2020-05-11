@@ -61,12 +61,12 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
       if (cache.size === 0) {
         headManager.set(node);
         tailManager.set(node);
-        nextPrevManager.deleteNext();
-        nextPrevManager.deletePrev();
+        nextPrevManager.deleteNext(node);
+        nextPrevManager.deletePrev(node);
       } else {
-        const head = tailManager.get();
-        nextPrevManager.setPrev(node);
-        nextPrevManager.setNext(head);
+        const head = headManager.get();
+        nextPrevManager.setPrev(head, node);
+        nextPrevManager.setNext(node, head);
         nextPrevManager.deletePrev(node);
         tailManager.set(node);
       }
@@ -76,10 +76,10 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
     prune() {
       const me = this;
       while (cache.size > limit) {
-        me.remove(tailManager.get(), { fireEntryRemove: true });
+        me.remove(tailManager.get(), { fireOnEntryRemove: true });
       }
     },
-    remove(node, { fireEntryRemove } = {}) {
+    remove(node, { fireOnEntryRemove } = {}) {
       const entry = cache.get(node.key);
 
       if (!entry) {
@@ -94,15 +94,15 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
       nextPrevManager.deleteNext(entry);
       nextPrevManager.deletePrev(entry);
 
-      if (fireEntryRemove && onRemoveEntry) {
+      if (fireOnEntryRemove && onRemoveEntry) {
         onRemoveEntry(entry.value, entry);
       }
 
       if (prev) {
-        nextPrevManager.setNext(next);
+        nextPrevManager.setNext(prev, next);
       }
       if (next) {
-        nextPrevManager.setPrev(prev);
+        nextPrevManager.setPrev(next, prev);
       }
       const tail = tailManager.get();
       if (entry === tail) {
@@ -155,7 +155,7 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
     remove(key) {
       const node = lru.peek(key);
       if (!node) return;
-      lru.remove(node, { fireEntryRemove: true });
+      lru.remove(node, { fireOnEntryRemove: true });
     },
     toArray() {
       let runner = headManager.get();
@@ -172,9 +172,9 @@ export const create = ({ limit = 0, onRemoveEntry } = {}) => {
       return items;
     },
 
-    destroy() {
+    clear() {
       for (const entry of cache.values()) {
-        lru.remove(entry, { fireEntryRemove: true });
+        lru.remove(entry, { fireOnEntryRemove: true });
       }
       cache = null;
     },
